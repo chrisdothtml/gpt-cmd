@@ -78,9 +78,13 @@ Override the gpt model used by the tool.
 
 **Default**: `gpt-4o`
 
+### `GPT_CMD_TOKEN`
+
+Provide your OpenAI token via this env var instead of storing it in a file.
+
 ### `GPT_CMD_TOKEN_FILE_PATH`
 
-Override the file path the tool gets your OpenAI token from.
+Override the file path the tool gets your OpenAI token from. Alternatively, you can provide the token directly via `GPT_CMD_TOKEN`.
 
 **Default**: `~/OPENAI_TOKEN`
 

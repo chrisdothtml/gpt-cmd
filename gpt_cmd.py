@@ -37,7 +37,7 @@ OPTIONS = {
   'model': os.environ.get('GPT_CMD_MODEL', 'gpt-4o'),
   'token_file_path': os.environ.get(
     'GPT_CMD_TOKEN_FILE_PATH',
-    os.path.join(os.path.expanduser('~'), 'OPENAI_TOKEN'),
+    os.path.join(os.path.expanduser('~'), 'OPENAI_TOKEN')
   ),
 }
 
@@ -79,7 +79,11 @@ class ansi:
 def call_gpt(messages):
   global OPENAI_CLIENT
   if OPENAI_CLIENT is None:
-    OPENAI_CLIENT = OpenAI(api_key=read_file(OPTIONS['token_file_path']))
+    token = os.environ.get(
+      'GPT_CMD_TOKEN',
+      read_file(OPTIONS['token_file_path'])
+    )
+    OPENAI_CLIENT = OpenAI(api_key=token)
 
   response = OPENAI_CLIENT.chat.completions.create(
     model=OPTIONS['model'],
