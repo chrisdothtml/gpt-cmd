@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/gpt_cmd
+          path: 'dist/gpt_cmd*'
 
   release:
     runs-on: ubuntu-latest
@@ -42,8 +42,16 @@ jobs:
       - name: Rename artifacts
         run: |
           for os in windows linux macos; do
-            echo "Moving ${os}/dist/gpt_cmd to gpt_cmd-${os}"
-            mv "${os}/dist/gpt_cmd" "gpt_cmd-${os}"
+            ext=""
+            if [ "$os" = "windows" ]; then
+              ext=".exe"
+            fi
+
+            src="${os}/dist/gpt_cmd${ext}"
+            dest="gpt_cmd-${os}${ext}"
+
+            echo "Moving $src to $dest"
+            mv "$src" "$dest"
             rm -rf "${os}/"
           done
       - name: Create release
