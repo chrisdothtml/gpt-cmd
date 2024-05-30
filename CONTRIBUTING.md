@@ -5,14 +5,14 @@
 First, install the dependencies (**note**: make sure you're using python 3 and pip 3):
 
 ```sh
-# install pipenv
-brew install pipenv
+# create virtual env
+python -m venv env
 
-# install both runtime and dev dependencies
-pipenv install --dev
+# activate env
+source env/bin/activate
 
-# activate the virtual env
-pipenv shell
+# install deps
+pip install -r requirements.txt
 ```
 
 Now you can run the tool via:
@@ -23,10 +23,6 @@ python -m gpt_cmd [...]
 
 ## Cutting a release
 
-Currently this just updates the `vendor` tarball (only needed if deps were added/upgraded):
+Pushing a version tag (e.g. `v.1.0.0`) will trigger the [release.yml](.github/workflows/release.yml) GitHub action, which will build binaries for supported OSes and publish a release with them.
 
-```sh
-./release.sh
-```
-
-This script requires all the tools mentioned in the [Running locally](#running-locally) section.
+The binaries are generated using [pyinstaller](https://pyinstaller.org/en/stable/).

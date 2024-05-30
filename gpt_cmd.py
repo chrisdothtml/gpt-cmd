@@ -5,6 +5,20 @@ import subprocess
 import sys
 from openai import OpenAI
 
+SYSTEM_PROMPT = '''
+Your job is to run commands necessary for achieving a task from a terminal.
+
+You'll be provided with an end goal, and you'll send replies in JSON format containing an array of commands to run in the terminal. Each time you send command(s) to run, you'll then be provided with the resulting stdout and stderr (you're being accessed via the OpenAI API, so when possible, include arguments in your commands to reduce noise in stdout and stderr to limit API usage).
+
+To convey context, you can use a JSON object with `context` (string) and `commands` (array).
+
+When you believe that the end goal is accomplished or unrecoverably failed, send a JSON object containing `status` ("success" or "failed") and `context` (noting things like commands that can be used to use any tools you installed, or why it failed if it did).
+
+IMPORTANT NOTE: each command you provide is being executed in a subshell via a python script, which means things like `cd` won't persist across commands, so you'll need to account for that.
+
+IMPORTANT NOTE: in your response to the first user prompt, generate a short (5 words max) dash-separated file name to describe their prompt. Provide this in a `convo-file-name` property in your JSON object.
+'''
+
 def ensure_dir(directory):
   if not os.path.exists(directory):
     os.makedirs(directory, exist_ok=True)
@@ -27,13 +41,8 @@ OPTIONS = {
   ),
 }
 
-# trust path provided by entrypoint bash script over `__file__`,
-# which can be a relative path in some cases
-PROJECT_ROOT_DIR = os.path.normpath(
-  os.environ.get('GPT_CMD_PROJECT_ROOT', os.path.dirname(__file__))
-)
-CONVOS_DIR = os.path.join(PROJECT_ROOT_DIR, '.convos')
-SYSTEM_PROMPT = read_file(os.path.join(PROJECT_ROOT_DIR, 'system-prompt.txt'))
+PROJECT_FILES_DIR = os.path.join(os.path.expanduser('~'), '.gpt_cmd')
+CONVOS_DIR = os.path.join(PROJECT_FILES_DIR, '.convos')
 OPENAI_CLIENT = None
 
 class ansi:
@@ -145,7 +154,7 @@ def main(goal):
         print(response['context'])
 
       save_convo()
-      exit(0 if was_success else 1)
+      sys.exit(0 if was_success else 1)
 
     if isinstance(response.get('context'), str):
       print(f"{ansi.blue('Context:')} {response['context']}")
@@ -162,7 +171,7 @@ def main(goal):
             clear_prev_line()
           else:
             save_convo()
-            exit(1)
+            sys.exit(1)
         stdout, exit_code = exec_cmd(cmd)
 
         cmd_ansi_color = ansi.green if exit_code == 0 else ansi.red
@@ -177,22 +186,22 @@ def main(goal):
     else:
       print(ansi.red('ERROR: No further commands provided, and no success/failure signal was provided'))
       save_convo()
-      exit(1)
+      sys.exit(1)
 
 if __name__ == "__main__":
   helptext = 'Usage:\ngpt_cmd <goal>\ngpt_cmd --get-convos-dir'
 
   if len(sys.argv) != 2:
     print(helptext)
-    sys.exit(1)
+    sys.sys.exit(1)
 
   if sys.argv[1] == '--help':
     print(helptext)
-    exit(0)
+    sys.exit(0)
 
   if sys.argv[1] == '--get-convos-dir':
     print(CONVOS_DIR)
-    exit(0)
+    sys.exit(0)
 
   goal = sys.argv[1]
   main(goal)

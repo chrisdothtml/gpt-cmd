@@ -2,6 +2,8 @@
 
 set -e
 
+# FIXME: update to use new binary approach
+
 ansi_blue='\033[94m'
 ansi_green='\033[92m'
 ansi_red='\033[91m'
