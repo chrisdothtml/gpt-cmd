@@ -8,7 +8,7 @@
 ```sh
 gpt_cmd "Install python3 and pip3 and symlink them to python and pip"
 
-gpt_cmd "You're running on an alpine linux distro that already has wget and bash installed. Install kafka"
+gpt_cmd "You're running in a container that already has wget and bash installed. Install kafka"
 
 gpt_cmd "Install SQLite and write a script to verify it's working correctly"
 ```

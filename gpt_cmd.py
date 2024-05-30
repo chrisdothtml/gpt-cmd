@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import platform
 import subprocess
 import sys
 from openai import OpenAI
@@ -121,9 +122,10 @@ def prompt_user_yn(prompt):
 def main(goal):
   convo_timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
   convo_file_name = None
+  system_info=f'System info:\nOS: {sys.platform}\nArchitecture: {platform.machine()}'
   messages = [
     {"role": "system", "content": SYSTEM_PROMPT},
-    {"role": "user", "content": goal}
+    {"role": "user", "content": f'{goal}\n{system_info}'}
   ]
 
   def save_convo():
