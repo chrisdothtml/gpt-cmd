@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+function quit_python_required() {
+  echo "ERROR: python 3 is required to run gpt_cmd" >&2
+  exit 1
+}
+
+function get_python_bin() {
+  if command -v python3 >/dev/null; then
+    echo "python3"
+    return 0
+  elif command -v python >/dev/null; then
+    major_version="$(python --version | grep -oE '[0-9]+' | head -1)"
+    if [ "$major_version" -ne 3 ]; then
+      quit_python_required
+    fi
+
+    echo "python"
+    return 0
+  fi
+
+  quit_python_required
+}
+
+export PYTHONPATH="$project_root/vendor"
+export GPT_CMD_PROJECT_ROOT="$project_root"
+$(get_python_bin) "$project_root/gpt_cmd.py" "$@"
