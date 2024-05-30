@@ -23,6 +23,6 @@ python -m gpt_cmd [...]
 
 ## Cutting a release
 
-Pushing a version tag (e.g. `v.1.0.0`) will trigger the [release.yml](.github/workflows/release.yml) GitHub action, which will build binaries for supported OSes and publish a release with them.
+Pushing a version tag (e.g. `v1.0.0`) will trigger the [release.yml](.github/workflows/release.yml) GitHub workflow, which will build binaries for supported OSes and publish a release with them.
 
 The binaries are generated using [pyinstaller](https://pyinstaller.org/en/stable/).

@@ -2,28 +2,44 @@
 
 set -e
 
-# FIXME: update to use new binary approach
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  OS="linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  OS="macos"
+else
+  OS="unknown"
+fi
 
 ansi_blue='\033[94m'
 ansi_green='\033[92m'
 ansi_red='\033[91m'
+ansi_yellow='\033[93m'
 ansi_reset='\033[0m'
 
-function log_blue() {
-  echo -e "${ansi_blue}$1${ansi_reset}"
+function print_blue() {
+  printf "${ansi_blue}%b${ansi_reset}" "$1"
+}
+function print_green() {
+  printf "${ansi_green}%b${ansi_reset}" "$1"
+}
+function print_red() {
+  printf "${ansi_red}%b${ansi_reset}" "$1"
+}
+function print_yellow() {
+  printf "${ansi_yellow}%b${ansi_reset}" "$1"
 }
 
-function log_green() {
-  echo -e "${ansi_green}$1${ansi_reset}"
+function log_error() {
+  print_red "ERROR: ${1}\n"
+}
+function log_warning() {
+  print_yellow "WARNING: ${1}\n"
 }
 
-function log_red() {
-  echo -e "${ansi_red}$1${ansi_reset}"
-}
-
-function fetch_latest_tarball() {
+function fetch_latest_binary() {
   local github_repo="$1"
-  local file_path="$2"
+  local dir_path="$2"
+  local binary_name="$3"
 
   # detect which fetch tool is available on the machine
   local fetch_tool
@@ -32,7 +48,7 @@ function fetch_latest_tarball() {
   elif command -v wget >/dev/null; then
     fetch_tool="wget"
   else
-    log_red "ERROR: No suitable download tool found (curl, wget)" >&2
+    log_error "No suitable download tool found (curl, wget)"
     exit 1
   fi
 
@@ -46,32 +62,68 @@ function fetch_latest_tarball() {
       releases_res="$(wget -qO- "$releases_url")";;
   esac
 
-  # parse out the latest release's tarball url
-  local latest_tarball_url="$( \
+  # get binary url from latest release for this OS
+  local latest_version="$( \
     echo "$releases_res" \
-      | grep '"tarball_url"' \
-      | sed -E 's/.*"tarball_url": "(.*)",/\1/' \
+      | grep '"tag_name"' \
+      | sed -E 's/.*"tag_name": "(.*)",/\1/' \
       | head -1 \
   )"
-  if [ -z "$latest_tarball_url" ]; then
+  local binary_urls="$( \
+    echo "$releases_res" \
+      | grep "releases/download/$latest_version/gpt_cmd-" \
+      | sed -E 's/[ \t]+"browser_download_url": "([^"]+)",?/\1/' \
+  )"
+  local latest_binary_url=""
+  for url in $binary_urls; do
+    os="$(echo "$url" | sed -E 's|.*/gpt_cmd-([^.]*).*|\1|')"
+    if [ "$os" = "$OS" ]; then
+      latest_binary_url="$url"
+      break
+    fi
+  done
+  if [ -z "$latest_binary_url" ]; then
     local error_file_name="gpt_cmd_install-error_$(date +"%Y-%m-%d_%H-%M-%S").log"
-    echo -e "ERROR: unable to find release tarball\n" >> "$error_file_name"
+    echo -e "ERROR: unable to find release binary\n" >> "$error_file_name"
     echo -e "GitHub releases response body:\n$releases_res" >> "$error_file_name"
 
-    log_red "ERROR: unable to find release tarball; see $error_file_name for more info" >&2
+    log_error "unable to find release binary; see $error_file_name for more info"
     exit 1
   fi
 
-  # fetch the tarball
+  # fetch the binary
+  local file_name="$(basename "$latest_binary_url")"
+  local file_path="$dir_path/$file_name"
   case $fetch_tool in
     curl)
-      curl -L -o "$file_path" "$latest_tarball_url";;
+      curl -L -s -S -o "$file_path" "$latest_binary_url";;
     wget)
-      wget -O "$file_path" "$latest_tarball_url";;
+      wget -q -O "$file_path" "$latest_binary_url";;
   esac
   if [ ! -e "$file_path" ]; then
-    log_red "ERROR: failed to fetch latest release tarball ($latest_tarball_url)" >&2
+    log_error "failed to fetch latest release tarball ($latest_binary_url)"
     exit 1
+  fi
+
+  # rename binary file
+  mv "$file_path" "$dir_path/$binary_name"
+}
+
+function make_binary_executable() {
+  local file_path="$1"
+
+  chmod +x "$file_path"
+
+  # try to make MacOS trust the binary file
+  if [ "$OS" = "macos" ]; then
+    if command -v xattr >/dev/null; then
+      if xattr -p com.apple.quarantine "$file_path" &>/dev/null; then
+        xattr -d com.apple.quarantine "$file_path"
+      fi
+    else
+      log_warning "Unable to update MacOS to trust binary. You may need to manually do so"
+      echo "(right click and click open on the binary file: $file_path)"
+    fi
   fi
 }
 
@@ -91,68 +143,41 @@ function get_profile_file() {
 }
 
 function run_install() {
-  local base_install_dir="${GPT_CMD_INSTALL_DIR:-$HOME}"
-  local install_dir="$base_install_dir/gpt_cmd"
-  log_blue "Installing gpt_cmd to ${base_install_dir}..."
-
-  # check for previous installation
-  local prev_install_exists="false"
-  local convos_dir_path="$install_dir/.convos"
-  local convos_backup_dir_path="$base_install_dir/.convos-backup"
-  if [ -e "$install_dir" ]; then
-    prev_install_exists="true"
-
-    # backup convos dir
-    if [ -e "$convos_dir_path" ]; then
-      echo ""
-      log_blue "Existing installation detected; preserving convos dir..."
-      mv "$convos_dir_path" "$convos_backup_dir_path"
-    fi
-
-    rm -rf "$install_dir"
+  if [ "$OS" = "unknown" ]; then
+    log_error "OS type '$OSTYPE' not recognized as a supported OS"
+    exit 1
   fi
 
-  mkdir -p "$install_dir"
-  cd "$install_dir"
+  local install_dir="$HOME/.gpt_cmd"
+  echo "Installing to ${install_dir}"
 
-  echo ""
-  log_blue "Attempting to fetch latest release..."
-  local tarball_file_name="gpt_cmd.tar.gz"
-  fetch_latest_tarball "chrisdothtml/gpt-cmd" "$tarball_file_name"
+  print_blue "Attempting to fetch latest binary..."
+  local repo_name="chrisdothtml/gpt-cmd"
+  local binary_dir_path="$install_dir/bin"
+  local binary_name="gpt_cmd"
+  mkdir -p "$binary_dir_path"
+  fetch_latest_binary "$repo_name" "$binary_dir_path" "$binary_name"
+  echo "✅"
 
-  echo ""
-  log_blue "Expanding tarballs..."
-  # untar repo
-  tar -xzf "$tarball_file_name" --strip-components=1
-  rm -rf "$tarball_file_name"
-  # untar vendored dependencies
-  tar -xzf vendor.tar.gz
-  rm -rf vendor.tar.gz
+  print_blue "Making binary executable on your system..."
+  local binary_file_path="$binary_dir_path/$binary_name"
+  make_binary_executable "$binary_file_path"
+  echo "✅"
 
-  if [ -e "$convos_backup_dir_path" ]; then
-    echo ""
-    log_blue "Restoring backed-up convos dir..."
-    mv "$convos_backup_dir_path" "$convos_dir_path"
-  fi
-
-  local path_update_str="export PATH=\"${install_dir}/bin:\$PATH\""
+  local path_update_str="export PATH=\"${binary_dir_path}:\$PATH\""
   local profile_file
   if ! command -v gpt_cmd >/dev/null; then
     profile_file="$(get_profile_file)"
-    echo ""
-    log_blue "Updating ${profile_file}..."
+    print_blue "Exposing binary to PATH..."
     echo -e "\n$path_update_str" >> "$profile_file"
+    echo "✅"
   fi
 
-  echo ""
-  log_green "✅ Done!"
-
+  print_green "\n✅ gpt_cmd installed successfully!\n"
   if [ -n "$profile_file" ]; then
-    echo ""
-    log_blue "\$PATH was updated via ${profile_file}. Open a new terminal and run 'gpt_cmd --help' to make sure it worked."
+    print_yellow "\nYour PATH was updated via ${profile_file}. Open a new terminal and run 'gpt_cmd --help' to make sure it worked.\n"
   fi
-  echo ""
-  log_blue "If \`gpt_cmd\` isn't found, add this to a profile file your terminal recognizes:"
+  print_yellow "\nIf \`gpt_cmd\` isn't found, add this to a profile file your terminal recognizes:\n"
   echo -e "\n  $path_update_str\n"
 }
 

@@ -34,7 +34,9 @@ With this approach, ChatGPT is able to probe your system and try running command
 > [!WARNING]
 > In light of my other warning above, this install script is pulled directly from my GitHub repo, and is a potential vulnerability if the repo (or GitHub) becomes compromised. Always inspect scripts for shady behavior before running them on your device (even mine: [install.sh](https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh)).
 
-**NOTE**: the system requirements are: `bash` and either `curl` or `wget`
+### Linux/MacOS
+
+**NOTE**: the only system requirements are `bash` and either `curl` or `wget`.
 
 ```sh
 curl -s https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh | bash
@@ -43,18 +45,15 @@ curl -s https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh |
 wget -qO- https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh | bash
 ```
 
-See [Env var overrides](#env-var-overrides) section for changing the install dir.
+The install script will make its best attempt to expose the binary to your `$PATH`, but if that doesn't work, you'll have to manually add it your path (install location is `$HOME/.gpt_cmd/`).
 
-The install script will write to your `.profile` file to expose it to your `$PATH`, but if that doesn't work, you'll have to manually add it your path:
+### Windows
 
-```sh
-# replace `$HOME` with your custom install dir if you used one
-export PATH="$HOME/gpt_cmd/bin:$PATH"
-```
+There's not currently an automated installer for Windows, but you can download the `.exe` file from the [releases page](https://github.com/chrisdothtml/gpt-cmd/releases).
 
 ## Use
 
-Before running, you need to create an `~/OPENAI_TOKEN` file and put your token in it.
+**NOTE**: before running, you need to create an `~/OPENAI_TOKEN` file and put your token in it.
 
 ```sh
 gpt_cmd <goal>
@@ -72,18 +71,6 @@ The `goal` can be literally anything you can achieve via a terminal (which is a 
 ## Env var overrides
 
 Enironment vars that you can provide to change the behavior of the tool.
-
-### `GPT_CMD_INSTALL_DIR`
-
-Override the dir the installer puts the tool in.
-
-**Default**: home dir
-
-**Example**:
-
-```sh
-curl -s [...] | GPT_CMD_INSTALL_DIR="/my/custom/dir" bash
-```
 
 ### `GPT_CMD_MODEL`
 
