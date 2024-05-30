@@ -1,6 +1,6 @@
 # gpt-cmd
 
-> Sit back and let ChatGPT figure out what commands need to be run
+> Sit back and let ChatGPT run your commands for you.
 
 > [!WARNING]
 > It's always risky to execute commands directly from a third party. Use responsibly and at your own risk.
