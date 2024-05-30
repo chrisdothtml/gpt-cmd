@@ -58,6 +58,8 @@ jobs:
           done
       - name: Create release
         uses: ncipollo/release-action@v1.14.0
+        permissions:
+          contents: write
         with:
           artifacts: 'bin/gpt_cmd*'
           tag: ${{ github.ref }}
