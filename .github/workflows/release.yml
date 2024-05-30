@@ -62,5 +62,3 @@ jobs:
         uses: ncipollo/release-action@v1.14.0
         with:
           artifacts: 'bin/gpt_cmd*'
-          tag: ${{ github.ref }}
-          name: ${{ github.ref }}
