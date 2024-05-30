@@ -129,7 +129,7 @@ def main(goal):
     response = json.loads(raw_response)
 
     if convo_file_name is None and len(response.get('convo-file-name', '')) > 0:
-      convo_file_name = f'{response['convo-file-name']}_{convo_timestamp}'
+      convo_file_name = f"{response['convo-file-name']}_{convo_timestamp}"
 
     print('\n----------')
 
