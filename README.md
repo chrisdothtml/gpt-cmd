@@ -34,7 +34,7 @@ With this approach, ChatGPT is able to probe your system and try running command
 > [!WARNING]
 > In light of my other warning above, this install script is pulled directly from my GitHub repo, and is a potential vulnerability if the repo (or GitHub) becomes compromised. Always inspect scripts for shady behavior before running them on your device (even mine: [install.sh](https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh)).
 
-**NOTE**: the install script and tool require: `python` (v3), `bash`, and either `curl` or `wget`
+**NOTE**: the system requirements are: `bash` and either `curl` or `wget`
 
 ```sh
 curl -s https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh | bash

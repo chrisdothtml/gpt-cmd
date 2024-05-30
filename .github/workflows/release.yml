@@ -50,7 +50,7 @@ jobs:
             fi
 
             src="${os}/gpt_cmd${ext}"
-            dest="bin/gpt_cmd-${{ github.ref }}-${os}${ext}"
+            dest="bin/gpt_cmd-${os}${ext}"
 
             echo "Moving $src to $dest"
             mv "$src" "$dest"
