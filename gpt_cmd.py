@@ -77,6 +77,7 @@ class ansi:
     return ansi.color_text(text, ansi._red)
 
 def call_gpt(messages):
+  global OPENAI_CLIENT
   if OPENAI_CLIENT is None:
     OPENAI_CLIENT = OpenAI(api_key=read_file(OPTIONS['token_file_path']))
 
