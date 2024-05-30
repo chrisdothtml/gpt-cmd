@@ -8,8 +8,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        artifact_name: [windows, linux, macos]
+        include:
+          - os: windows-latest
+            artifact_name: windows
+          - os: ubuntu-latest
+            artifact_name: linux
+          - os: macos-latest
+            artifact_name: macos
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
