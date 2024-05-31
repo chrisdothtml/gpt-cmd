@@ -101,7 +101,7 @@ function fetch_latest_binary() {
       wget -q -O "$file_path" "$latest_binary_url";;
   esac
   if [ ! -e "$file_path" ]; then
-    log_error "failed to fetch latest release tarball ($latest_binary_url)"
+    log_error "failed to fetch latest release binary ($latest_binary_url)"
     exit 1
   fi
 

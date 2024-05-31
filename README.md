@@ -45,7 +45,7 @@ curl -s https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh |
 wget -qO- https://raw.githubusercontent.com/chrisdothtml/gpt-cmd/main/install.sh | bash
 ```
 
-The install script will make its best attempt to expose the binary to your `$PATH`, but if that doesn't work, you'll have to manually add it your path (install location is `$HOME/.gpt_cmd/`).
+The install script will make its best attempt to expose the binary to your `$PATH`, but if that doesn't work, you'll have to manually add it your path (binary install location is `$HOME/.gpt_cmd/bin`).
 
 ### Windows
 
