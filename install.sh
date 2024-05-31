@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+if [[ "$OSTYPE" == "linux"* ]]; then
   OS="linux"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   OS="macos"
