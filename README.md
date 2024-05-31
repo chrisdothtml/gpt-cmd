@@ -11,6 +11,8 @@ gpt_cmd "Install python3 and pip3 and symlink them to python and pip"
 gpt_cmd "You're running in a container that already has wget and bash installed. Install kafka"
 
 gpt_cmd "Install SQLite and write a script to verify it's working correctly"
+
+gpt_cmd "Install black and generate a simple starter config file for my python project"
 ```
 
 ### Problem
