@@ -8,28 +8,16 @@
 ```sh
 gpt_cmd "Install python3 and pip3 and symlink them to python and pip"
 
-gpt_cmd "You're running in a container that already has wget and bash installed. Install kafka"
-
 gpt_cmd "Install SQLite and write a script to verify it's working correctly"
 
 gpt_cmd "Install black and generate a simple starter config file for my python project"
 ```
 
-### Problem
+`gpt_cmd` lets ChatGPT iteratively run commands for you to achieve your end goal.
 
-> I'm working on a fresh Docker image, and I can't remember the specific commands needed to install tools. I can ask ChatGPT, but it might give me an answer that doesn't work with the exact environment I'm running in (e.g. differences between linux distros). Why can't ChatGPT just figure all that out for me?
+The way it works is that you provide some end goal (e.g. 'Install python3 and pip3'), the tool will bake-in information about your OS and architecture, and ChatGPT will respond with a list of commands it wants to run. The tool will execute these commands and respond to ChatGPT with the stdout and exit code of each. Once ChatGPT thinks it's done, it'll respond accordingly and the loop will end (and it'll usually provide a bit of context about what it did).
 
-The main problem is that, a lot of the time, to determine what exactly needs to be run (e.g. to install kafka in a Docker image), you need to try running commands to see if they fail, or run commands to probe the system to determine what tools are available.
-
-For example, sometimes `sudo` doesn't exist in Docker, and since it runs as the root user by default, you can just leave it out. ChatGPT has no problem deducing that it can just remove the `sudo` in those cases.
-
-### Solution
-
-Let ChatGPT iteratively run commands for you to achieve your end goal.
-
-The way it works is that you provide some end goal (e.g. 'Install python3 and pip3'), and ChatGPT will respond with a list of commands it wants to run. The tool will execute these commands and respond to ChatGPT with the stdout and exit code of each. Once ChatGPT thinks it's done, it'll respond accordingly and the loop will end.
-
-With this approach, ChatGPT is able to probe your system and try running commands, responding to potential failures as they happen with alternative commands.
+With this approach, ChatGPT is able to probe your system and try running commands, responding to potential failures as they happen with alternative commands. It's especially handy for tasks that aren't all that complex, but you can't be bothered to google exactly what you need to run.
 
 ## Install
 
