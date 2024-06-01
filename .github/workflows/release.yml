@@ -5,7 +5,9 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build_and_release:
+  build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
