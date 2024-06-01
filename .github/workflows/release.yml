@@ -22,8 +22,8 @@ jobs:
           GOOS=linux GOARCH=arm go build -o bin/gpt_cmd-linux-arm
           GOOS=linux GOARCH=arm64 go build -o bin/gpt_cmd-linux-arm64
 
-          GOOS=darwin GOARCH=amd64 go build -o bin/gpt_cmd-macos-amd64
-          GOOS=darwin GOARCH=arm64 go build -o bin/gpt_cmd-macos-arm64
+          GOOS=darwin GOARCH=amd64 go build -o bin/gpt_cmd-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o bin/gpt_cmd-darwin-arm64
 
           GOOS=windows GOARCH=386 go build -o bin/gpt_cmd-windows-386.exe
           GOOS=windows GOARCH=amd64 go build -o bin/gpt_cmd-windows.exe
