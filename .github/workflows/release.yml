@@ -5,60 +5,29 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            artifact_name: windows
-          - os: ubuntu-latest
-            artifact_name: linux
-          - os: macos-latest
-            artifact_name: macos
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Build binary
-        run: pyinstaller --onefile gpt_cmd.py
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: 'dist/gpt_cmd*'
-          retention-days: 1
-
-  release:
-    runs-on: ubuntu-latest
-    needs: build
+  build_and_release:
     permissions:
       contents: write
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-      - name: Rename artifacts
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+      - name: Build binaries
         run: |
-          mkdir -p bin
-          for os in windows linux macos; do
-            ext=""
-            if [ "$os" = "windows" ]; then
-              ext=".exe"
-            fi
+          GOOS=linux GOARCH=386 go build -o bin/gpt_cmd-linux-386
+          GOOS=linux GOARCH=amd64 go build -o bin/gpt_cmd-linux
+          GOOS=linux GOARCH=arm go build -o bin/gpt_cmd-linux-arm
+          GOOS=linux GOARCH=arm64 go build -o bin/gpt_cmd-linux-arm64
 
-            src="${os}/gpt_cmd${ext}"
-            dest="bin/gpt_cmd-${os}${ext}"
+          GOOS=darwin GOARCH=amd64 go build -o bin/gpt_cmd-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o bin/gpt_cmd-darwin-arm64
 
-            echo "Moving $src to $dest"
-            mv "$src" "$dest"
-            rm -rf "${os}/"
-          done
+          GOOS=windows GOARCH=386 go build -o bin/gpt_cmd-windows-386.exe
+          GOOS=windows GOARCH=amd64 go build -o bin/gpt_cmd-windows.exe
       - name: Create release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: 'bin/gpt_cmd*'
+          artifacts: 'bin/*'
