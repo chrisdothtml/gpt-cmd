@@ -2,15 +2,8 @@
 
 set -e
 
-if [[ "$OSTYPE" == "linux"* ]]; then
-  OS="linux"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-  OS="macos"
-else
-  OS="unknown"
-fi
-
 ansi_blue='\033[94m'
+ansi_dim='\033[2m'
 ansi_green='\033[92m'
 ansi_red='\033[91m'
 ansi_yellow='\033[93m'
@@ -18,6 +11,9 @@ ansi_reset='\033[0m'
 
 function print_blue() {
   printf "${ansi_blue}%b${ansi_reset}" "$1"
+}
+function print_dim() {
+  printf "${ansi_dim}%b${ansi_reset}" "$1"
 }
 function print_green() {
   printf "${ansi_green}%b${ansi_reset}" "$1"
@@ -38,8 +34,9 @@ function log_warning() {
 
 function fetch_latest_binary() {
   local github_repo="$1"
-  local dir_path="$2"
-  local binary_name="$3"
+  local os_name="$2"
+  local dir_path="$3"
+  local binary_name="$4"
 
   # detect which fetch tool is available on the machine
   local fetch_tool
@@ -69,39 +66,43 @@ function fetch_latest_binary() {
       | sed -E 's/.*"tag_name": "(.*)",/\1/' \
       | head -1 \
   )"
-  local binary_urls="$( \
+  # this is just used to validate that there are any binary urls
+  # resolved for the latest release
+  # (to determine if the GH call failed or if there's just not a file for this OS)
+  local latest_binary_urls="$( \
     echo "$releases_res" \
       | grep "releases/download/$latest_version/gpt_cmd-" \
+  )"
+  local os_binary_url="$( \
+    echo "$releases_res" \
+      | grep "releases/download/$latest_version/gpt_cmd-${os_name}" \
       | sed -E 's/[ \t]+"browser_download_url": "([^"]+)",?/\1/' \
   )"
-  local latest_binary_url=""
-  for url in $binary_urls; do
-    os="$(echo "$url" | sed -E 's|.*/gpt_cmd-([^.]*).*|\1|')"
-    if [ "$os" = "$OS" ]; then
-      latest_binary_url="$url"
-      break
-    fi
-  done
-  if [ -z "$latest_binary_url" ]; then
-    local error_file_name="gpt_cmd_install-error_$(date +"%Y-%m-%d_%H-%M-%S").log"
-    echo -e "ERROR: unable to find release binary\n" >> "$error_file_name"
-    echo -e "GitHub releases response body:\n$releases_res" >> "$error_file_name"
+  if [ -z "$os_binary_url" ]; then
+    echo ""
+    if [ -n "$latest_binary_urls" ]; then
+      log_error "no binary found for OS '${os_name}' on latest release"
+    else
+      local error_file_name="gpt_cmd_install-error_$(date +"%Y-%m-%d_%H-%M-%S").log"
+      echo -e "ERROR: unable to find release binary\n" >> "$error_file_name"
+      echo -e "GitHub releases response body:\n$releases_res" >> "$error_file_name"
 
-    log_error "unable to find release binary; see $error_file_name for more info"
+      log_error "unable to lookup release binaries; see $error_file_name for more info"
+    fi
     exit 1
   fi
 
   # fetch the binary
-  local file_name="$(basename "$latest_binary_url")"
+  local file_name="$(basename "$os_binary_url")"
   local file_path="$dir_path/$file_name"
   case $fetch_tool in
     curl)
-      curl -L -s -S -o "$file_path" "$latest_binary_url";;
+      curl -L -s -S -o "$file_path" "$os_binary_url";;
     wget)
-      wget -q -O "$file_path" "$latest_binary_url";;
+      wget -q -O "$file_path" "$os_binary_url";;
   esac
   if [ ! -e "$file_path" ]; then
-    log_error "failed to fetch latest release binary ($latest_binary_url)"
+    log_error "failed to fetch latest release binary ($os_binary_url)"
     exit 1
   fi
 
@@ -111,11 +112,12 @@ function fetch_latest_binary() {
 
 function make_binary_executable() {
   local file_path="$1"
+  local os_name="$2"
 
   chmod +x "$file_path"
 
   # try to make MacOS trust the binary file
-  if [ "$OS" = "macos" ]; then
+  if [[ "$os_name" == "darwin"* ]]; then
     if command -v xattr >/dev/null; then
       if xattr -p com.apple.quarantine "$file_path" &>/dev/null; then
         xattr -d com.apple.quarantine "$file_path"
@@ -142,33 +144,47 @@ function get_profile_file() {
   done
 }
 
+function get_os_name() {
+  local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  local arch=$(uname -m)
+
+  case "$arch" in
+    x86_64)
+      arch="amd64" ;;
+    i686)
+      arch="386" ;;
+    aarch64)
+      arch="arm64" ;;
+    armv7l)
+      arch="arm" ;;
+  esac
+
+  echo "${os}-${arch}"
+}
+
 function run_install() {
-  if [ "$OS" = "unknown" ]; then
-    log_error "OS type '$OSTYPE' not recognized as a supported OS"
-    exit 1
-  fi
-
+  local os_name="$(get_os_name)"
   local install_dir="$HOME/.gpt_cmd"
-  echo "Installing to ${install_dir}"
+  print_blue "Installing to ${install_dir}\n"
 
-  print_blue "Attempting to fetch latest binary..."
+  print_dim "Attempting to fetch latest binary..."
   local repo_name="chrisdothtml/gpt-cmd"
   local binary_dir_path="$install_dir/bin"
   local binary_name="gpt_cmd"
   mkdir -p "$binary_dir_path"
-  fetch_latest_binary "$repo_name" "$binary_dir_path" "$binary_name"
+  fetch_latest_binary "$repo_name" "$os_name" "$binary_dir_path" "$binary_name"
   echo "✅"
 
-  print_blue "Making binary executable on your system..."
+  print_dim "Making binary executable on your system..."
   local binary_file_path="$binary_dir_path/$binary_name"
-  make_binary_executable "$binary_file_path"
+  make_binary_executable "$binary_file_path" "$os_name"
   echo "✅"
 
   local path_update_str="export PATH=\"${binary_dir_path}:\$PATH\""
   local profile_file
   if ! command -v gpt_cmd >/dev/null; then
     profile_file="$(get_profile_file)"
-    print_blue "Exposing binary to PATH..."
+    print_dim "Exposing binary to PATH..."
     echo -e "\n$path_update_str" >> "$profile_file"
     echo "✅"
   fi
