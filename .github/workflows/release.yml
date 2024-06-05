@@ -18,7 +18,7 @@ jobs:
       - name: Build binaries
         run: |
           GOOS=linux GOARCH=386 go build -o bin/gpt_cmd-linux-386
-          GOOS=linux GOARCH=amd64 go build -o bin/gpt_cmd-linux
+          GOOS=linux GOARCH=amd64 go build -o bin/gpt_cmd-linux-amd64
           GOOS=linux GOARCH=arm go build -o bin/gpt_cmd-linux-arm
           GOOS=linux GOARCH=arm64 go build -o bin/gpt_cmd-linux-arm64
 
@@ -26,7 +26,7 @@ jobs:
           GOOS=darwin GOARCH=arm64 go build -o bin/gpt_cmd-darwin-arm64
 
           GOOS=windows GOARCH=386 go build -o bin/gpt_cmd-windows-386.exe
-          GOOS=windows GOARCH=amd64 go build -o bin/gpt_cmd-windows.exe
+          GOOS=windows GOARCH=amd64 go build -o bin/gpt_cmd-windows-amd64.exe
       - name: Create release
         uses: ncipollo/release-action@v1.14.0
         with:
