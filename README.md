@@ -3,7 +3,7 @@
 > Sit back and let ChatGPT run your commands for you.
 
 > [!WARNING]
-> It's always risky to execute commands directly from a third party. Use responsibly and at your own risk.
+> While this tool does prompt you before running any command, it's always risky to execute commands directly from a third party. Use responsibly and at your own risk.
 
 ```sh
 gpt_cmd "Install python3 and pip3 and symlink them to python and pip"
