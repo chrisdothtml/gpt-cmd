@@ -2,35 +2,20 @@
 
 set -e
 
-ansi_blue='\033[94m'
-ansi_dim='\033[2m'
-ansi_green='\033[92m'
-ansi_red='\033[91m'
-ansi_yellow='\033[93m'
-ansi_reset='\033[0m'
-
-function print_blue() {
-  printf "${ansi_blue}%b${ansi_reset}" "$1"
+function print_color() {
+  # only use colors in interactive shells
+  if [ -t 1 ]
+    then printf "${1}%b\033[0m" "$2"
+    else printf "%b" "$2"
+  fi
 }
-function print_dim() {
-  printf "${ansi_dim}%b${ansi_reset}" "$1"
-}
-function print_green() {
-  printf "${ansi_green}%b${ansi_reset}" "$1"
-}
-function print_red() {
-  printf "${ansi_red}%b${ansi_reset}" "$1"
-}
-function print_yellow() {
-  printf "${ansi_yellow}%b${ansi_reset}" "$1"
-}
-
-function log_error() {
-  print_red "ERROR: ${1}\n"
-}
-function log_warning() {
-  print_yellow "WARNING: ${1}\n"
-}
+function print_blue() { print_color "\033[94m" "$1"; }
+function print_dim() { print_color "\033[2m" "$1"; }
+function print_green() { print_color "\033[92m" "$1"; }
+function print_red() { print_color "\033[91m" "$1"; }
+function print_yellow() { print_color "\033[93m" "$1"; }
+function log_error() { print_red "ERROR: ${1}\n"; }
+function log_warning() { print_yellow "WARNING: ${1}\n"; }
 
 function fetch_latest_binary() {
   local github_repo="$1"
@@ -137,7 +122,7 @@ function get_profile_file() {
     full_path="$HOME/$file"
 
     # use .profile as default if none others exist
-    if [ -e "$full_path" ] || [ $file = ".profile" ]; then
+    if [ -e "$full_path" ] || [ "$file" = ".profile" ]; then
       echo "$full_path"
       return 0
     fi
@@ -198,7 +183,6 @@ function run_install() {
 }
 
 # if either executed directly, or executed directly from GitHub URL
-# (this is so that the utils in this file can be imported by the other bash scripts)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] || [ -z "${BASH_SOURCE[0]}" ]; then
   run_install
 fi
